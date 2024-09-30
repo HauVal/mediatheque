@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des emprunts</title>
+</head>
+<body>
+    <header>
+        <a href="{% url 'bibliothecaire' %}">
+            Retour
+        </a>
+    </header>
+    <h1>Liste des emprunts</h1>
+    <ul>
+      {% for emprunt in emprunts %}
+      <li>
+          {{ emprunt.emprunteur }} -
+          {% if emprunt.livre %}{{ emprunt.livre }}{% endif %}
+          {% if emprunt.cd %}{{ emprunt.cd }}{% endif %}
+          {% if emprunt.dvd %}{{ emprunt.dvd }}{% endif %} -
+          date de l'emprunt : {{ emprunt.date_emprunt }}
+        <a href="{% url 'emprunt_return' emprunt.id %}">Retourner emprunt</a>
+      </li>
+      {% endfor %}
+    </ul>
+    <a href="{% url 'creer_emprunt' %}">Ajouter un Emprunt</a>
+</body>
+</html>

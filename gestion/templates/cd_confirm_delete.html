@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Supprimer un CD</title>
+</head>
+<body>
+     <h1>Supprimer {{ cd.name }}</h1>
+      <p>Êtes-vous sûr de vouloir supprimer ce CD ?</p>
+
+      <form method="post">
+          {% csrf_token %}
+          <button type="submit">Oui, supprimer</button>
+          <a href="{% url 'liste_cds' %}">Annuler</a>
+      </form>
+</body>
+</html>

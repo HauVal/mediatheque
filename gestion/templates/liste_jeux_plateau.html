@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des jeux de plateau</title>
+</head>
+<body>
+    <header>
+        <a href="{% url 'bibliothecaire' %}">
+            Retour
+        </a>
+    </header>
+    <h1>Liste des jeux de plateau</h1>
+    <ul>
+      {% for jeu in jeux %}
+      <li>
+        {{ jeu.name }} - {{ jeu.createur }}
+        <a href="{% url 'jeu_update' jeu.id %}">Modifier</a>
+        <a href="{% url 'jeu_delete' jeu.id %}">Supprimer</a>
+      </li>
+      {% endfor %}
+    </ul>
+    <a href="{% url 'creer_jeu' %}">Ajouter un Jeu de plateau</a>
+</body>
+</html>

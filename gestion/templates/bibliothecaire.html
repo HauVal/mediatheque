@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Accueil</title>
+</head>
+<body>
+    <h1>Menu Bibliothécaire</h1>
+
+    <ul>
+        <li>
+            <a href="{% url 'liste_membres' %}">Liste des membres emprunteurs</a>
+        </li>
+        <li>
+            <a href="{% url 'liste_livres' %}"> Liste des livres</a>
+        </li>
+        <li>
+            <a href="{% url 'liste_dvds' %}">Liste des DVDs</a>
+        </li>
+        <li>
+            <a href="{% url 'liste_cds' %}">Liste des CDs</a>
+        </li>
+        <li>
+            <a href="{% url 'liste_jeux' %}">Liste des jeux de plateau</a>
+        </li>
+        <li>
+            <a href="{% url 'liste_emprunts' %}">Emprunts</a>
+        </li>
+    </ul>
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des membres</title>
+</head>
+<body>
+    <header>
+        <a href="{% url 'bibliothecaire' %}">
+            Retour
+        </a>
+    </header>
+    <h1>Liste des membres</h1>
+    <ul>
+      {% for membre in membres %}
+      <li>
+        {{ membre.name }} - Nombre d'emprunt actuel : {{ membre.count_emprunts }} {{ membre.bloque|yesno:"- Bloqué, " }}
+        <a href="{% url 'membre_update' membre.id %}">Modifier</a>
+        <a href="{% url 'membre_delete' membre.id %}">Supprimer</a>
+      </li>
+      {% endfor %}
+    </ul>
+    <a href="{% url 'creer_membre' %}">Ajouter un membre</a>
+</body>
+</html>

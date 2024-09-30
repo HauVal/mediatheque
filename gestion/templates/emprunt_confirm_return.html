@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Retour d'emprunt</title>
+</head>
+<body>
+     <h1>
+       Confirmation retour de
+       {% if emprunt.livre %}{{ emprunt.livre }}{% endif %}
+       {% if emprunt.cd %}{{ emprunt.cd }}{% endif %}
+       {% if emprunt.dvd %}{{ emprunt.dvd }}{% endif %}
+     </h1>
+      <p>Confirmation du retour ?</p>
+
+      <form method="post">
+          {% csrf_token %}
+          <button type="submit">Oui</button>
+          <a href="{% url 'liste_emprunts' %}">Annuler</a>
+      </form>
+</body>
+</html>

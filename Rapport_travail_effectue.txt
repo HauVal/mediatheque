@@ -1,0 +1,302 @@
+Pour lancer le projet, il faut entrer dans le terminal à la racine du projet : python manage.py
+Pour lancer les test, il faut entrer dans le terminal à la racine du projet : Python manage.py test
+
+Pour accéder à la BDD, il faut ajouter /admin dans l'url. J'ai créer un administrateur (superutilisateur) pour pouvoir y accéder, avec la commande suivante :
+python manage.py createsuperuser
+
+Voici les identifiants pour ce connecter à la BDD :
+Username : Admin
+Password : mediatheque
+
+Dans cette base de données j'y est déjà créée des données pour tester les fonctionnalités de mon côté.
+
+Etude et correctif du code fourni :
+
+Dans le code existant j'ai repris donc les noms des classes et pour les différentes classe j'ai créé une classe parent "media" qui est abstraite car elle ne va servir qu'a faire hérité de ses attributs pour les classes "Livres", "CD" et "DVD".
+
+Dans le code fourni j'ai remarqué que les attributs "name", "dateEmprunt", "disponible" et "emprunteur" etait répéter pour les classe "livre", "cd" et "dvd". J'ai donc créer la classe media avec ces 4 attributs là pour ne pas répéter les attributs dans chaque classes.
+
+Ensuite comme les attributs "name", "dateEmprunt" et "disponible" sont des champs j'ai donc rajouter les "fields" aux attributs (CharFIeld pour name car c'est un champ texte à entrer avec 120 caractères maximum, DateField pour date emprunt car il correspond à une date et BooleanField pour disponible car s'il est disponible il est en True et si indisponible il sera False.). L'attribut "emprunteur" est une clé primaire qui va être relié à la classe "emprunteur" (ForeignKey).
+
+Enuite chaque classe à une attribut différente qui est donc uniquement ajouter en dehors de la classe "media" donc directement dans la classe concerné :
+- Livre nous avons "auteur" en CharFIeld
+- DVD nous avons "realisateur" en CharFIeld
+- CD nous avons "artiste" en CharField
+
+Pour ce qui est de la classe JeuDePlateau elle ne va pas hérité de "media" car les jeux de plateau ne sont pas empruntable et n'ont donc pas besoins des attributs "dateEmprunt", "disponible" et "emprunteur". Il n'ont donc que l'attribut "name" qui est identique à la classe "media", j'ai donc trouver plus pertinant de simplement créer une classe "JeuDePlateau" avec deux attributs, "name" et "createur" en CharField (comme dans le code fourni).
+
+Pour la classe Emprunteur, comme JeuDePlateau j'ai créée une classe à part car ce n'ai pas un média et qu'il y a d'autre choses à mettre en place qui sont liées aux emprunt.
+
+Tout ceci je l'ai fait dans le fichier models.py car se sont les models qui vont servir pour faire fonctionner les views, les forms et les templates.
+
+J'ai créée un models supplémentaire qui est la classe "emprunt" et qui va donc servir pour les emprunt.
+
+
+
+Mise en place des fonctionnalités demandé :
+
+
+Application bibliothécaire :
+Créer un membre-emprunteur et ajouter un média :
+
+Pour créer un membre emprunteur et ajouter un média j'ai utilisé le même style de views. 
+
+def creer_membres(request):
+    if request.method == 'POST':        #envoie le formulaire dans la requête
+        form = EmprunteurForm(request.POST)       #Vérifie si la requête est de type POst
+        if form.is_valid():         # Vérifie si les données du formulaires sont valides.
+            form.save()     #Sauvegarde les données si le formulaire est valide.
+            return redirect('liste_membres')    #Redirige vers la views concerné (ici liste_membres)
+    else:
+        form = EmprunteurForm()   #Si la requête n'est pas POST, cela permet d'afficher un formulaire vide (ici le formulaire EmprunteurForm() et de le remplir.)
+    return render(request, 'creer_membre.html', {'form': form})    #Permet d'afficher le formulaire dans le template.
+
+(On fait la même chose pour les livres, dvd et cd en replaçant membres et emprunteur par l'élément concerné)
+
+J'ai du également crééer un formulaire dans forms.py :
+
+class EmprunteurForm(forms.ModelForm):   #forms.ModelForm lie directement à un model de formulaire Django
+    class Meta:   #classe interne qui fourni des métadonnées sur le formulaire.
+        model = Emprunteur   #Indique que le formulaire EmprunteurForm est lié au model Emprunteur
+        fields = ['name', 'bloque']    #Les champs du modèle emprunteur que je souhaite inclure dans le formulaire
+
+Pareil que pour les views, les formulaire pour l'emprunt des différents médias on reprend la même base en changeant les informations concernées.
+
+Et ensuite chaque Template qui y sont liée ont été créé. (voir Template liste_membres.html qui a un bouton "ajouter un membres" qui va renvoyer au Template "creer_membre" qui affichera le formulaire pour créer un membre. Pareil pour les livres, cd, dvd et jeux de plateau.)
+
+Afficher la liste des membres et des médias :
+
+J'ai choisis de séparer chaque liste des différents médias dans l'application bibliothécaires pour plus de visibilité.
+
+Pour l'affichage de la liste des membres, j'ai tout d'abord créer la views nécessaire (j'ai procéder de la mêmes manières pour les listes des livres, cd, dvd et jeux de plateau) :
+
+def liste_membres(request):
+    membres = Emprunteur.objects.all()  #utilise le model Emprunteur pour interroger la BDD et récupérer les enregistrements présents dans la table correspondante.
+    return render (request, 'liste_membres.html', {'membres': membres})   #Envoie le rendu au Template "liste_membres.html"
+
+Ensuite le Template à été créer et récupère les informations  membres comme ci :
+
+    <ul>
+      {% for membre in membres %}
+      <li>
+        {{ membre.name }} - Nombre d'emprunt actuel : {{ membre.count_emprunts }} {{ membre.bloque|yesno:"- Bloqué, " }}
+        <a href="{% url 'membre_update' membre.id %}">Modifier</a>
+        <a href="{% url 'membre_delete' membre.id %}">Supprimer</a>
+      </li>
+      {% endfor %}
+    </ul>
+
+On fait le même procéder pour les listes des livres, cds, dvds et jeux de plateau.
+
+
+Mettre à jour un membre :
+
+Pour mettre à jour un membre j'ai créer la view suivante :
+
+def membre_update(request, membre_id):    #membre_id représente l'identifiant du membre que l'on souhaite mettre à jour.
+    emprunteur = get_object_or_404(Emprunteur, pk=membre_id)   #avec get_object-or-404 on va récupérer un objet Emprunteur dont la clé primaire correspond à membre_id. SI cette objet n'existe pas, Django va nous renvoyer une erreur 404.
+
+    if request.method == 'POST':
+        form = EmprunteurForm(request.POST, instance=emprunteur)  #nous reprenons presque la même structure que pour la création d'un membre mais on y ajoute instance= emprunteur pour reprendre les informations de de l'emprunteur relié à l'id pour préremplir le formulaire de modification.
+        if form.is_valid():
+            form.save()
+            return redirect('liste_membres')
+
+    else:
+        form = EmprunteurForm(instance=emprunteur)
+
+    return render(request, 'creer_membre.html', {'form': form})  #on redirige sur le Template creer_membre car nous avons besoins de la même chose que pour la création.
+
+
+Créer un emprunt pour un media disponible :
+
+Pour créer un emprunt j'ai d'abord créer une classe Emprunt dans models.py :
+
+class Emprunt(models.Model):   #J'ai relié emprunteur, livre, dvd et cd grâce aux clé primaire pour que l'on puisse sélectionner les médias et membres inscrit en BDD.
+    emprunteur = models.ForeignKey('Emprunteur', on_delete=models.SET_NULL, null=True)
+    date_emprunt = models.fields.DateField(default=timezone.now, null=True)   #default=timezone.now permet de remplir le champ directement avec la date d'aujourd'hui.
+    livre = models.ForeignKey("Livre", on_delete=models.SET_NULL, null=True, blank=True)
+    dvd = models.ForeignKey("DVD", on_delete=models.SET_NULL, null=True, blank=True)
+    cd = models.ForeignKey("CD", on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        emprunteur_name = self.emprunteur.name if self.emprunteur else 'Inconnu' 
+        date = self.date_emprunt if self.date_emprunt else 'Date inconnue'
+        livre_name = self.livre.name if self.livre else ''
+        dvd_name = self.dvd.name if self.dvd else ''
+        cd_name = self.cd.name if self.cd else ''
+
+        return f"{emprunteur_name} {livre_name}{dvd_name}{cd_name} {date}"
+
+Ensuite j'ai modifier ma classe emprunteur pour que lorsqu'un membre 3 emprunt il devient bloqué et ne puisse plus emprunter. Egalement pour bloquer un membre s'il a un emprunt de plus de 7 jours :
+
+class Emprunteur(models.Model):
+    name = models.CharField(max_length=120)
+    bloque = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+    def count_emprunts(self):
+        # Sert à compter le nombre d'emprunt pour l'afficher dans la liste des membres
+        return Emprunt.objects.filter(emprunteur=self).count()
+
+
+    def check_bloque(self):
+        # Sert à compter le nombre d'emprunt pour savoir à quel moment bloqué le membre.
+        emprunts_actifs = Emprunt.objects.filter(emprunteur=self)
+        # Bloque le membre après le 3ème emprunt
+        if emprunts_actifs.count() >= 2:
+            if not self.bloque:
+                self.bloque = True
+                self.save()
+            return True
+
+        # Vérifier les emprunts de plus de 7 jours
+        for emprunt in emprunts_actifs:
+            if (timezone.now().date() - emprunt.date_emprunt).days > 7:
+                if not self.bloque:
+                    self.bloque = True
+                    self.save()
+                return True
+
+        if self.bloque:  # Débloquer si le membre est bloqué lors du retour.
+            self.bloque = False
+            self.save()
+        return False
+
+
+Ensuite la view pour entrer l'emprunt :
+
+def creer_emprunt(request):
+    if request.method == 'POST':
+        form = EmpruntForm(request.POST)
+        if form.is_valid():
+            emprunt = form.save(commit=False)  # Si le formulaire est valide on ne le sauvegarde pas tout de suite
+            # Marquer comme indisponible si le media est emprunté.
+            if emprunt.livre:
+                emprunt.livre.disponible = False
+                emprunt.livre.save()
+            if emprunt.dvd:
+                emprunt.dvd.disponible = False
+                emprunt.dvd.save()
+            if emprunt.cd:
+                emprunt.cd.disponible = False
+                emprunt.cd.save()
+            emprunt.save()  # Sauvegarder l'emprunt
+            return redirect('liste_emprunts')
+    else:
+        form = EmpruntForm()
+    return render(request, 'creer_emprunt.html', {'form': form})
+
+Ensuite j'ai créer le formulaire pour l'emprunt dans forms.py :
+
+class EmpruntForm(forms.ModelForm):
+    class Meta:
+        model = Emprunt
+        fields = ['emprunteur', 'date_emprunt', 'livre', 'dvd', 'cd']
+
+    def __init__(self, *args, **kwargs):
+        super(EmpruntForm, self).__init__(*args, **kwargs) #super va permettre de filtrer les objets à afficher.
+        self.fields['emprunteur'].queryset = Emprunteur.objects.filter(bloque=False)  #permet de n'afficher que les emprunteurs qui ne sont pas bloqué.
+        self.fields['livre'].queryset = Livre.objects.filter(disponible=True) #permet d'afficher que les médias qui sont disponible.
+        self.fields['dvd'].queryset = DVD.objects.filter(disponible=True)
+        self.fields['cd'].queryset = CD.objects.filter(disponible=True)
+
+    def clean(self): #Permet de récupérer les données pour les champs.
+        cleaned_data = super().clean()
+        emprunteur = cleaned_data.get("emprunteur")
+        livre = cleaned_data.get("livre")
+        dvd = cleaned_data.get("dvd")
+        cd = cleaned_data.get("cd")
+
+        # Vérifie qu'un seul champ est rempli car je souhaite que lors d'un emprunt nous pouvons mettre qu'un seul médias pour que un emprunt correspondent à un media.
+        if (livre is None and dvd is None and cd is None) or (livre and dvd) or (livre and cd) or (dvd and cd):
+            raise forms.ValidationError("Vous devez choisir un et un seul média (livre, CD ou DVD).")
+
+        if emprunteur:
+            emprunteur.check_bloque()  # Permet de mettre à jour l'état de l'emprunteur si on le bloc ou non.
+
+Ensuite les templates liste_emprunts.html et creer_emprunt.html ont été créé.
+
+Application membre :
+Afficher la liste de tous les médias :
+
+Tous d'abord j'ai créer la view pour afficher la liste de tout les médias pour les membres :
+
+def liste_medias_membre(request):
+    livres = Livre.objects.all()
+    dvds = DVD.objects.all()
+    cds = CD.objects.all()
+    jeux = JeuDePlateau.objects.all()
+    context = {
+        'livres': livres,
+        'dvds': dvds,
+        'cds': cds,
+        'jeux': jeux
+    }
+    return render(request, 'liste_medias_membre.html', context)
+
+J'ai ici reroupés les données de tout les medias pour qu'ils puissent être consultable sur la même page. Elle est donc rendu sur le Template liste_media_membre.html.
+
+
+
+Stratégies de test :
+
+Pour les test j'ai tout d'abord mis en place 5 tests qui sont relativement identique pour tester l'ajout d'un media et d'un membre.
+
+class TestCreateEmprunteur(TestCase):
+    def setUp(self):
+        Emprunteur.objects.create(name="Test Emprunteur", bloque=False) #va créer un emprunteur test qui n'est pas bloqué
+
+    def test_create_emprunteur(self):
+        emprunteur = Emprunteur.objects.get(name="Test Emprunteur")
+        self.assertEqual(emprunteur.name, "Test Emprunteur")      #Vérification que le nom du membre créer est bien Test Emprunteur.
+
+
+Ensuite j'ai créer un test pour vérifier la limite des 3 emprunts :
+
+class TestLimiteEmprunt(TestCase):
+    def setUp(self):
+        # Crée un emprunteur et quelques livres pour les tests
+        self.emprunteur = Emprunteur.objects.create(name="John Doe")
+        self.livre1 = Livre.objects.create(name="Livre 1", disponible=True)
+        self.livre2 = Livre.objects.create(name="Livre 2", disponible=True)
+        self.livre3 = Livre.objects.create(name="Livre 3", disponible=True)
+
+    def test_emprunteur_bloque_apres_trois_emprunts(self):
+        # Crée les trois emprunts pour l'emprunteur
+        Emprunt.objects.create(emprunteur=self.emprunteur, livre=self.livre1, date_emprunt=timezone.now())
+        Emprunt.objects.create(emprunteur=self.emprunteur, livre=self.livre2, date_emprunt=timezone.now())
+        Emprunt.objects.create(emprunteur=self.emprunteur, livre=self.livre3, date_emprunt=timezone.now())
+
+        # Vérifie le statut après avoir appelé check_bloque la fonction qui bloque le membre au bout de 3 emprunts ou au bout de 7 jours (mais ici c'est les 3 emprunts qui nous intéresse).
+        self.emprunteur.check_bloque()
+
+        # Vérifie que l'emprunteur est maintenant bloqué
+        self.assertTrue(self.emprunteur.bloque, "L'emprunteur est bloqué après 3 emprunts.")
+
+Et un dernier test pour tester si un membre et bloquer quand il a un emprunt de plus de 7 jours :
+
+class TestBloquageEmpruntSeptJours(TestCase):
+    def setUp(self):
+        self.emprunteur = Emprunteur.objects.create(name="Jane Doe")
+        self.livre = Livre.objects.create(name="Livre Test", disponible=True)
+
+    def test_emprunteur_bloque_emprunt_7_jours(self):
+        # Crée un emprunt datant de plus de 7 jours
+        emprunt = Emprunt.objects.create(
+            emprunteur=self.emprunteur,
+            livre=self.livre,
+            date_emprunt=timezone.now() - timedelta(days=8)
+        )
+
+        # Vérifie le blocage de l'emprunteur
+        self.emprunteur.check_bloque()  # vérifie le blocage
+
+        # Rafraîchi l'emprunteur pour s'assurer que l'état "bloque" est mis à jour
+        self.emprunteur.refresh_from_db()
+
+        # Vérifie que l'emprunteur est maintenant bloqué
+        self.assertTrue(self.emprunteur.bloque, 
+                        "L'emprunteur est bloqué après un emprunt de plus de 7 jours."

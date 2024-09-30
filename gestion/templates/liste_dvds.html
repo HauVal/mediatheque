@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des DVDs</title>
+</head>
+<body>
+    <header>
+        <a href="{% url 'bibliothecaire' %}">
+            Retour
+        </a>
+    </header>
+    <h1>Liste des DVDs</h1>
+    <ul>
+      {% for dvd in dvds %}
+      <li>
+        {{ dvd.name }} - {{ dvd.realisateur }} - Disponible : {{ dvd.disponible|yesno:"Oui,Non" }}
+        <a href="{% url 'dvd_update' dvd.id %}">Modifier</a>
+        <a href="{% url 'dvd_delete' dvd.id %}">Supprimer</a>
+      </li>
+      {% endfor %}
+    </ul>
+    <a href="{% url 'creer_dvd' %}">Ajouter un DVD</a>
+</body>
+</html>

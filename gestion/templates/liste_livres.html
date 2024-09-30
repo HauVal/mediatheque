@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des livres</title>
+</head>
+<body>
+    <header>
+        <a href="{% url 'bibliothecaire' %}">
+            Retour
+        </a>
+    </header>
+    <h1>Liste des livres</h1>
+    <ul>
+      {% for livre in livres %}
+      <li>
+        {{ livre.name }} - {{ livre.auteur }} - Disponible : {{ livre.disponible|yesno:"Oui,Non" }}
+        <a href="{% url 'livre_update' livre.id %}">Modifier</a>
+        <a href="{% url 'livre_delete' livre.id %}">Supprimer</a>
+      </li>
+      {% endfor %}
+    </ul>
+    <a href="{% url 'creer_livre' %}">Ajouter un livre</a>
+</body>
+</html>

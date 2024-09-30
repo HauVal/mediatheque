@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>liste des CDS</title>
+</head>
+<body>
+    <header>
+        <a href="{% url 'bibliothecaire' %}">
+            Retour
+        </a>
+    </header>
+    <h1>Liste des CDs</h1>
+    <ul>
+      {% for cd in cds %}
+      <li>
+        {{ cd.name }} - {{ cd.artiste }} - Disponible : {{ cd.disponible|yesno:"Oui,Non" }}
+        <a href="{% url 'cd_update' cd.id %}">Modifier</a>
+        <a href="{% url 'cd_delete' cd.id %}">Supprimer</a>
+      </li>
+      {% endfor %}
+    </ul>
+    <a href="{% url 'creer_cd' %}">Ajouter un CD</a>
+</body>
+</html>
